@@ -7,7 +7,7 @@ public class Main {
     public static void main(String[] args) {
     String data = "";
         try {
-            File myObj = new File(/*"/Users/user/Desktop/Geosearch/src/com/company/ukraine_poi.csv"*/);
+            File myObj = new File("/Users/user/Desktop/Geosearch/src/com/company/ukraine_poi.csv");
             Scanner myReader = new Scanner(myObj);
             if (myReader.hasNextLine()) {
                data = myReader.nextLine();
