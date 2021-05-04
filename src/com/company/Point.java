@@ -17,7 +17,7 @@ public class Point {
        type = infoArr[2];
        subType = infoArr[3];
        name = infoArr[4];
-       address = infoArr[5];
+      // address = infoArr[5];
     }
 
     public double measureDistance(double lat2, double lon2){
