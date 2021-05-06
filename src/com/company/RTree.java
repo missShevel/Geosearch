@@ -1,5 +1,6 @@
 package com.company;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 
 public class RTree<T> {
@@ -115,11 +116,17 @@ public class RTree<T> {
         }
         LinkedList<Node> cc = new LinkedList<Node>(l.children);
         l.children.clear();
-        Node[] elements = quadraticElementCollect(cc);
+        Node[] elements = pickSeeds(cc);
         resultNodes[0].children.add(elements[0]);
         resultNodes[1].children.add(elements[1]);
         tighten(resultNodes);
         while (!cc.isEmpty()) {
+            //If all entries have
+            //been assigned, stop If one group has
+            //so few entries that all the rest must
+            //be assigned to it in order for it to
+            //have the minimum number m, assign
+            //them and stop
             if ((resultNodes[0].children.size() >= minEntries)
                     && (resultNodes[1].children.size() + cc.size() == minEntries)) {
                 resultNodes[1].children.addAll(cc);
@@ -128,15 +135,22 @@ public class RTree<T> {
                 tighten(resultNodes);
                 return resultNodes;
             }
-            Node nextContainer = quadraticContainerPicker(cc);
+            Node nextEntry = pickNext(cc, resultNodes);
             Node optimal;
-            float e0 = getRequiredEnlargement(resultNodes[0].coordinates, resultNodes[0].dimensions, nextContainer);
-            float e1 = getRequiredEnlargement(resultNodes[1].coordinates, resultNodes[1].dimensions, nextContainer);
+            float e0 = getRequiredEnlargement(resultNodes[0].coordinates, resultNodes[0].dimensions, nextEntry);
+            float e1 = getRequiredEnlargement(resultNodes[1].coordinates, resultNodes[1].dimensions, nextEntry);
+            //adding the entry to
+            //the group with smaller area,
             if (e0 < e1) {
                 optimal = resultNodes[0];
-            } else if (e0 > e1) {
+            }
+            //adding the entry to
+            //the group with fewer entries,
+            else if (e0 > e1) {
                 optimal = resultNodes[1];
-            } else {
+            }
+            //adding the entry to the either group [??????]
+            else {
                 float a0 = getArea(resultNodes[0].dimensions);
                 float a1 = getArea(resultNodes[1].dimensions);
                 if (a0 < a1) {
@@ -154,27 +168,125 @@ public class RTree<T> {
                     }
                 }
             }
-            optimal.children.add(nextContainer);
+            optimal.children.add(nextEntry);
             tighten(optimal);
 
         }
         return resultNodes;
     }
 
-    private Node[] quadraticElementCollect(LinkedList<Node> fromNodes) {
+    //Algorithm PickSeeds
+// Select two entries to be the first elements of the groups
+//PSl [Calculate inefficiency of grouping entries together]
+// For each pair of entries E1 and E2, compose a rectangle J including E1 I and E2 I. Calculate d = area(J) - area(E1 I) - area(E2 I)
+//PS2 [Choose the most wasteful pair ]
+//Choose the pair with the largest d
+    private Node[] pickSeeds(LinkedList<Node> fromNodes) {
+        Node[] elementsToTheGroup = new Node[2];
+        float maxWaste = -1.0f * Float.MAX_VALUE;
+        for (Node n1 : fromNodes) {
+            for (Node n2 : fromNodes) {
+                if (n1 == n2) continue;
+                float n1area = getArea(n1.dimensions);
+                float n2area = getArea(n2.dimensions);
+                float Jarea = 1.0f;
+                for (int i = 0; i < numDims; i++) {
+                    float jc0 = Math.min(n1.coordinates[i], n2.coordinates[i]);
+                    float jc1 = Math.max(n1.coordinates[i] + n1.dimensions[i], n2.coordinates[i] + n2.dimensions[i]);
+                    Jarea *= (jc1 - jc0);
+
+                }
+                float waste = Jarea - n1area - n2area;
+                if (waste > maxWaste) {
+                    maxWaste = waste;
+                    elementsToTheGroup[0] = n1;
+                    elementsToTheGroup[1] = n2;
+
+                }
+            }
+        }
+        fromNodes.remove(elementsToTheGroup[0]);
+        fromNodes.remove(elementsToTheGroup[1]);
+        return elementsToTheGroup;
     }
 
-    private Node quadraticContainerPicker(LinkedList<Node> containers) {
+    // Select one remaining
+    //entry for classification in a group.
+    private Node pickNext(LinkedList<Node> childsDivided, Node[] possibleCont) {
+        //[Determine cost of putting each entry in each group
+        float maxd = -1.0f * Float.MAX_VALUE;
+        Node nextEntry = null;
+        for (Node c : childsDivided) {
+            float d1 = getRequiredEnlargement(possibleCont[0].coordinates, possibleCont[0].dimensions, c);
+            float d2 = getRequiredEnlargement(possibleCont[1].coordinates, possibleCont[0].dimensions, c);
+            float difference = Math.abs(d2 - d1);
+            //Find entry with greatest preference for one group
+            if (difference > maxd) {
+                maxd = difference;
+                nextEntry = c;
+            }
+        }
+        assert (nextEntry != null) : "No node was selected";
+        childsDivided.remove(nextEntry);
+        return nextEntry;
+
     }
 
+    //підігнати розміри прямокутника до крйніх координат
     private void tighten(Node... n) {
+        assert (n.length >= 1) : "Pass some entries to tighten them";
+        for (Node entry : n) {
+            assert (entry.children.size() > 0) : "tighten() cannot be called for the empty node";
+            float[] minCoords = new float[2];
+            float[] maxCoords = new float[2];
+            for (int i = 0; i < 2; i++) {
+                minCoords[i] = Float.MAX_VALUE;
+                maxCoords[i] = -1.0f * Float.MAX_VALUE;
 
+                for (Node c : entry.children) {
+                    c.parent = entry;
+                    if (c.coordinates[i] < minCoords[i]) {
+                        minCoords[i] = c.coordinates[i];
+                    }
+                    if ((c.coordinates[i] + c.dimensions[i]) > maxCoords[i]) {
+                        maxCoords[i] = (c.coordinates[i] + c.dimensions[i]);
+                    }
+                }
+            }
+            for (int i = 0; i < 2; i++) {
+                maxCoords[i] -= minCoords[i];
+            }
+            System.arraycopy(minCoords, 0, entry.coordinates, 0, numDims);
+            System.arraycopy(maxCoords, 0, entry.dimensions, 0, numDims);
+        }
 
     }
 
-    private void adjustTree(Node split, Node split1) {
-
+    private void adjustTree(Node N, Node NN) {
+        if (N == root) {
+            if (NN != null) {
+                root = buildRoot(false);
+                root.children.add(N);
+                N.parent = root;
+                root.children.add(NN);
+                NN.parent = root;
+            }
+            tighten(root);
+            return;
+        }
+        tighten(N);
+        if (NN != null) {
+            tighten(NN);
+            if (N.parent.children.size() > maxEntries) {
+                Node[] splitted = splitNode(N.parent);
+                adjustTree(splitted[0], splitted[1]);
+            }
+        }
+        if (N.parent != null) {
+            adjustTree(N.parent, null);
+        }
     }
-
-
 }
+
+
+//tighten & adjustTree = similar things???
