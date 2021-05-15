@@ -37,7 +37,7 @@ public class Rectangle {
     public static Rectangle FromPoint(Point point) throws Exception {
         return new Rectangle(point, 0, 0);
     }
-/**TODO: correct formula for search rechangle : https://www.movable-type.co.uk/scripts/latlong.html */
+
     public static Rectangle searchRectangle(Point fromPoint, double searchLength) throws Exception {
 //        double lengthOfLatitudeInUkraine;
 //        double lengthOfLongitudeInUkraine;

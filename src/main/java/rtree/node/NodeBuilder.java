@@ -14,7 +14,7 @@ public class NodeBuilder extends FromFileBuilder.FromStringBuilder<DataNode> {
         String subtype = parameters.length >= 4 ? parameters[3] : "";
         String name = parameters.length >= 5 ? parameters[4] : "";
 
-        Building building = new Building(type, subtype, name);
+        Building building = new Building(latitude, longitude, type, subtype, name);
         Rectangle buildingPosition = Rectangle.FromPoint(new Point(latitude, longitude));
         return new DataNode<Building>(building, buildingPosition);
     }

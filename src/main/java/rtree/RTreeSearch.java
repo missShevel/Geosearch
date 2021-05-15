@@ -1,5 +1,8 @@
 package rtree;
 import rtree.node.*;
+
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 public class RTreeSearch {
@@ -14,6 +17,7 @@ public class RTreeSearch {
         // String path = args[1];
         BuildTree(db);
         SearchTree(lat, loong, size, type);
+        System.out.println();
 
     }
 
@@ -35,8 +39,10 @@ public class RTreeSearch {
 
     public static void SearchTree(double x, double y, double size, String type) throws Exception {
         // var found = tree.SearchForBuildingsInArea(new Rectangle(new Point(50.60659, 30.45436), 0.1, 0.1));
-        var found = tree.SearchForBuildingsInArea(Rectangle.searchRectangle(new Point(x, y), size),type);
-        printFoundObjects(found);
+          var found = tree.SearchForBuildingsInArea(Rectangle.searchRectangle(new Point(x, y), size),type);
+        findTheClosestBuilding(found, x, y);
+
+         printFoundObjects(found);
     }
 
     public static void printFoundObjects(List<Building> foundObjects){
@@ -49,4 +55,19 @@ public class RTreeSearch {
         }
     }
 
+    public static void findTheClosestBuilding(List<Building> all, double lat, double lon){
+        double minDistance = Double.MAX_VALUE;
+        Building closest = new Building();
+        for (Building b : all){
+            double  d =  Math.sqrt(Math.pow(((lat - b.getLat())*111.321),2) + Math.pow(((lon - b.getLon())*Math.cos(lon )),2));
+          if (d < minDistance){
+              minDistance = d;
+              closest = b;
+          }
+        }
+        System.out.println("The closest building of this type is: " + closest.getName());
+        System.out.println("Distance is: " + minDistance + "km");
+    }
+
 }
+

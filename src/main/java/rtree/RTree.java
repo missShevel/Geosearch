@@ -4,12 +4,7 @@ import java.lang.reflect.ParameterizedType;
 import java.util.LinkedList;
 import java.util.List;
 
-import rtree.node.Building;
-import rtree.node.DataNode;
-import rtree.node.DataNodeExpectedException;
-import rtree.node.IncompatibleDataTypeException;
-import rtree.node.Node;
-import rtree.node.Rectangle;
+import rtree.node.*;
 
 public class RTree {
    private Node root;
@@ -27,15 +22,27 @@ public class RTree {
       leafNode.AddChild(nodeToInsert);
    }
 
+//   public Building SearchForTheClosestBuildingOfCertainType(List<Building> allInArea, Point fromPoint, String filter, double size) throws Exception {
+//      allInArea = SearchForBuildingsInArea(new Rectangle(fromPoint, size, size), filter);
+//      if(!allInArea.isEmpty()){
+//         return allInArea.get(0);
+//      } else {
+//        size += 0.1 ;
+//        // allInArea = SearchForBuildingsInArea(new Rectangle(fromPoint, size, size), filter);
+//         return SearchForTheClosestBuildingOfCertainType(allInArea, fromPoint, filter, size);
+//      }
+//
+//   }
+
    public List<Building> SearchForBuildingsInArea(Rectangle searchArea, String filter)
-         throws DataNodeExpectedException, IncompatibleDataTypeException {
+           throws DataNodeExpectedException, IncompatibleDataTypeException {
       List<Building> foundBuildings = new LinkedList<>();
-      SearchForDataNodeInArea(root, searchArea, foundBuildings,filter);
+      SearchForDataNodeInArea(root, searchArea, foundBuildings, filter);
       return foundBuildings;
    }
 
    private void SearchForDataNodeInArea(Node nodeToTraverse, Rectangle searchArea, List<Building> foundNodes, String filter)
-         throws DataNodeExpectedException, IncompatibleDataTypeException {
+           throws DataNodeExpectedException, IncompatibleDataTypeException {
       List<Node> children = nodeToTraverse.GetChildren();
 
       if (children.size() == 0) {
@@ -50,7 +57,7 @@ public class RTree {
          } catch (Exception e) {
             Class expectedGenericClass = foundNodes.getClass();
             ParameterizedType expectedParametrizedType = (ParameterizedType) expectedGenericClass
-                  .getGenericSuperclass();
+                    .getGenericSuperclass();
             Class expectedDataType = (Class) (expectedParametrizedType.getActualTypeArguments()[0]);
 
             Class actualGenericClass = nodeToTraverse.getClass();
@@ -62,7 +69,7 @@ public class RTree {
             // types and we want to find all Hospital in area
             throw new IncompatibleDataTypeException(expectedDataType, actualDataType, e);
          }
-         if(dataNode.data.getType().equals(filter)) {
+         if (dataNode.data.getType().equals(filter)) {
             foundNodes.add(dataNode.data);
          }
          return;
